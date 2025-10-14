@@ -32,7 +32,7 @@ Para rodar o sistema em sua máquina local, siga os passos abaixo:
    
    ```bash
    git clone https://github.com/wesleytj/sistema_bancario.git
-   cd [pasta-do-projeto]
+   cd sistema_bancario
    ```
 
 2. **Execute o Arquivo Python:**
