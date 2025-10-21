@@ -1,28 +1,33 @@
-# 🏦 Sistema Bancário em Python (DIO Bank - Versão 1)
+# 🏦 Sistema Bancário em Python (DIO Bank - Versão 1.1.0)
 
-Um projeto desenvolvido em Python que simula as operações básicas de um sistema bancário: Depósito, Saque e Visualização de Extrato. Este é a **primeira versão (V1)**, focada em atender os requisitos mínimos do desafio.
+Um projeto desenvolvido em Python que simula as operações básicas de um sistema bancário: Depósito, Saque e Visualização de Extrato. Esta versão foi **refatorada** para melhorar a organização do código e a modularidade.
 
-## 🌟 Destaques do Projeto
+## 🌟 Destaques da Versão 1.1.0
 
-Este sistema, apelidado de "DIO Bank", foi construído em Python puro e segue a arquitetura solicitada pelo desafio, utilizando funções para modularizar as operações e estruturas de controle para implementar as regras de negócio.
+Esta versão representa uma grande evolução estrutural e de regras de negócio em relação à V1:
 
-## 🚀 Funcionalidades
+* **Estrutura Refatorada:** Migração de variáveis globais para um **Dicionário Centralizado (`conta`)** que armazena o estado e as regras de configuração.
+* **Novas Regras de Limite:** Implementação do **Limite de Transações Diárias** (total de depósitos + saques).
+* **Melhor Lógica de Bloqueio:** As operações de consulta (Extrato) não são mais bloqueadas ao atingir limites.
 
-O sistema implementa três operações principais com regras específicas:
+## 🚀 Funcionalidades e Regras de Negócio
 
-| Funcionalidade       | Descrição                            | Regras de Negócio                                                                                                                |
-|:-------------------- |:------------------------------------ |:-------------------------------------------------------------------------------------------------------------------------------- |
-| **Depósito** (`[d]`) | Permite adicionar fundos à conta.    | Aceita apenas valores positivos.                                                                                                 |
-| **Saque** (`[s]`)    | Permite retirar fundos da conta.     | <ul><li>Limite de **3 saques** por dia.</li><li>Valor máximo de **R$ 500,00** por saque.</li><li>Verificação de saldo.</li></ul> |
-| **Extrato** (`[e]`)  | Visualiza o histórico de transações. | Exibe todos os depósitos e saques, além do saldo atual no formato `R$ xxx.xx`. Exibe mensagem se não houver movimentações.       |
-| **Sair** (`[q]`)     | Encerra a execução do sistema.       |                                                                                                                                  |
+O sistema implementa as seguintes regras de operação:
 
-## 🛠️ Tecnologias Utilizadas
+| Funcionalidade       | Descrição e Regras                                                                                                                                                                                                                                        |
+|:-------------------- |:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Depósito** (`[d]`) | Permite adicionar fundos à conta. <br> **Regra Nova:** Sujeito ao **Limite de Transações Diárias**.                                                                                                                                                       |
+| **Saque** (`[s]`)    | Permite retirar fundos da conta. <br> <ul><li>Limite de **3 saques** por dia (Configurável).</li><li>Valor máximo de **R$ 500,00** por saque (Configurável).</li><li>Verificação de saldo.</li><li>Sujeito ao **Limite de Transações Diárias**.</li></ul> |
+| **Extrato** (`[e]`)  | Visualiza o histórico de transações e saldo atual. <br> **Melhoria:** Sempre acessível, mesmo após limites de movimentação.                                                                                                                               |
+| **Sair** (`[q]`)     | Encerra a execução do sistema.                                                                                                                                                                                                                            |
 
-O projeto foi desenvolvido inteiramente com:
+## 🛠️ Tecnologias e Arquitetura
 
-* **Python 3.x**
-* Utilização de variáveis globais (para estado do sistema) e funções (para modularização).
+O projeto foi refatorado utilizando:
+
+* **Python 3.x** e sintaxe `match/case` para telas (se versão 3.10+).
+* **Estrutura de Dados:** Dicionário para encapsular o estado da conta e as configurações.
+* **Modularização:** Funções recebem o estado da conta como parâmetro, diminuindo a dependência de variáveis globais.
 
 ## 💡 Como Executar
 
@@ -44,23 +49,15 @@ Para rodar o sistema em sua máquina local, siga os passos abaixo:
 3. **Interaja com o Menu:**
    O sistema exibirá um menu interativo onde você pode escolher entre as opções `[d]`, `[s]`, `[e]` ou `[q]`.
 
+4. 
+
 ## 📚 Próximos Passos (Próxima Versão - V2)
 
-Apesar de funcional, esta V1 será a base para aprimoramentos futuros. As melhorias planejadas incluem:
+Os planos para a V2 agora se concentram em aprimoramentos mais avançados, como:
 
-1. **Melhores Práticas de Código:**
-   * Substituir o uso de variáveis globais por classes e métodos (Programação Orientada a Objetos) para encapsular o estado da conta.
-   * Uso de *docstrings* e tipagem para melhor legibilidade.
-2. **Refatoração do Extrato:**
-   * Utilizar passagem de argumentos em vez de depender de variáveis globais para a função de extrato.
-3. **Tratamento de Exceções:**
-   * Implementar validação de entrada robusta (ex: evitar erros ao digitar letras em valores numéricos).
-
-## 🔗 Referência Utilizada
-
-Para aprimoramento e consultas durante o desenvolvimento, foi utilizado o seguinte recurso:
-
-* [W3Schools Python Tutorial](https://www.w3schools.com/python/default.asp) - Referência em sintaxe e funções básicas de Python.
+1. **Programação Orientada a Objetos (POO):** Substituir o dicionário de estado por classes e métodos para encapsular a lógica de conta, cliente e histórico.
+2. **Tratamento de Exceções:** Implementar validação de entrada robusta (ex: evitar erros ao digitar letras em valores numéricos).
+3. **Novas Funcionalidades:** Adicionar recursos como múltiplos usuários e contas.
 
 ---
 
