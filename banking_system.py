@@ -69,9 +69,10 @@ def telas(tipo, conta=None):
 #             DIO Bank               #
 #     📄  Extrato Bancário           #
 ######################################
-# Saldo atual: R${conta["saldo"]}    \n       #
-#    {get_movimentacoes(conta)}            #
-#                                    #
+# Saldo atual: R${conta["saldo"]:.2f}#
+# ------------------------------------
+{get_movimentacoes(conta)}
+# ------------------------------------ 
 #                                    #
 #                                    #
 ######################################
@@ -81,34 +82,52 @@ def telas(tipo, conta=None):
 # Funções
 # -----------------
 
-def add_movimentacoes(conta, tipo, valor):
-    conta["movimentacoes"].append((tipo, valor))
+def add_movimentacoes(conta, data, tipo, valor):
+    conta["movimentacoes"].append((data, tipo, valor))
 
 def get_movimentacoes(conta):
     if len(conta["movimentacoes"]) == 0:
         return "Nenhuma movimentação realizada."
     else:
-        linha = """"""
-        for tipo, valor in conta["movimentacoes"]:
-            linha += f"{tipo} - R${valor:.2f}\n#    "
-        return linha
+        extrato_formatado = ""        
+        # Data armazenada em formato datetime object.
+        for data_obj, tipo, valor in conta["movimentacoes"]:
+            
+            # Converte a data e hora para formato ptBR
+            data_hora_str = data_obj.strftime('%d/%m/%Y %H:%M')            
+            # Formato: [Data e Hora] Tipo - R$ Valor
+            extrato_formatado += f"[{data_hora_str}] {tipo}: R${valor:.2f}\n"
+        
+        
+        return extrato_formatado
 
-def bloqueado():
+def bloqueado(conta):
+    if conta["movimentacoes"]:
+        ultima_data_obj = conta["movimentacoes"][-1][0] 
+    else:
+        ultima_data_obj = datetime.now() 
+        
+    # Adiciona mais um dia
+    data_retorno = ultima_data_obj + timedelta(days=1)    
+    # Converte em formato ptBR
+    data_retorno_formatada = data_retorno.strftime('%d/%m/%Y %H:%M')
+    
     msg_bloqueado = f"""
 ######################################
-#             DIO Bank               #
+#            DIO Bank                #
 #             Bloqueado              #
 ######################################
 # Você atingiu o limite de transações#
-# diárias.                           #
+# diárias ({conta["config"]["limite_transacoes_diario"]}).                   #
 #                                    #
-# Volte novamente, a partir          #
-# de: {f"{datetime.strptime(f"{datetime.now().strftime('%d/%m/%Y %H:%M')}", "%d/%m/%Y %H:%M") + timedelta(days=1)}"}            #
+# Tente novamente, a partir de:      #
+# {data_retorno_formatada}           #
 #                                    #
 ######################################
 => """
-
     return msg_bloqueado
+
+
 
 while True:
     opcao = input(telas(tipo = "menu"))
@@ -116,7 +135,7 @@ while True:
     if opcao in ("d", "s"):
         # Aplica a validação de limite de transações diárias APENAS para transações
         if conta["transacao_diario"] >= conta["config"]["limite_transacoes_diario"]:
-            print(bloqueado())
+            print(bloqueado(conta))
             # Se a transação estiver bloqueada, volta para o menu principal
             continue  # Volta ao início do 'while True'
     
@@ -126,7 +145,8 @@ while True:
             valor_deposito = float(input(telas(tipo = "deposito"))) # Informa o valor a ser depositado
             if(valor_deposito > 0):
                 conta["saldo"] += valor_deposito # Adiciona o valor na conta
-                add_movimentacoes(conta, "Depósito", valor_deposito) # Registra a movimetação para inserir no extrato posteriormente
+                data_hora = datetime.now() # Registra a data e hora da movimentação
+                add_movimentacoes(conta, data_hora, "Depósito", valor_deposito) # Registra a movimetação para inserir no extrato posteriormente
                 conta["transacao_diario"] += 1 # Contabiliza a transação
                 print("Depósito realizado com sucesso!")
                 break
@@ -157,7 +177,8 @@ while True:
                 conta["saldo"] -= valor_saque  # Remove o valor sacado do saldo em conta                
                 conta["qtd_saque"] += 1 # Contabiliza a quantidade de saques
                 conta["transacao_diario"] += 1 # Contabiliza a transação
-                add_movimentacoes(conta, "Saque", valor_saque) # Registra a movimetação para inserir no extrato posteriormente
+                data_hora = datetime.now() # Registra a data e hora da movimentação               
+                add_movimentacoes(conta, data_hora, "Saque", valor_saque) # Registra a movimetação para inserir no extrato posteriormente
                 print("Saque realizado com sucesso!")
                 break
             

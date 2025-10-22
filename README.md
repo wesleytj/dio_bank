@@ -1,33 +1,32 @@
-# 🏦 Sistema Bancário em Python (DIO Bank - Versão 1.1.0)
+# 🏦 Sistema Bancário em Python (DIO Bank - Versão 1.2.0)
 
-Um projeto desenvolvido em Python que simula as operações básicas de um sistema bancário: Depósito, Saque e Visualização de Extrato. Esta versão foi **refatorada** para melhorar a organização do código e a modularidade.
+Este projeto simula as operações básicas de um sistema bancário (Depósito, Saque, Extrato) e serve como base para o desafio do Bootcamp de Python da DIO. Esta versão foi significativamente refatorada e aprimorada com novas regras de negócio e a dimensão do tempo.
 
-## 🌟 Destaques da Versão 1.1.0
+## 🌟 Destaques da Versão 1.2.0
 
-Esta versão representa uma grande evolução estrutural e de regras de negócio em relação à V1:
+Esta versão foca na robustez das regras de negócio e em uma experiência do usuário (UX) mais informativa:
 
-* **Estrutura Refatorada:** Migração de variáveis globais para um **Dicionário Centralizado (`conta`)** que armazena o estado e as regras de configuração.
-* **Novas Regras de Limite:** Implementação do **Limite de Transações Diárias** (total de depósitos + saques).
-* **Melhor Lógica de Bloqueio:** As operações de consulta (Extrato) não são mais bloqueadas ao atingir limites.
+* **Registro de Tempo:** Todas as transações agora registram a data e hora exatas da operação.
+* **Extrato Detalhado:** O extrato exibe o histórico de movimentações com a data e hora formatada em padrão brasileiro (DD/MM/AAAA HH:MM).
+* **Bloqueio Inteligente:** A mensagem de limite excedido informa ao usuário a data e hora exata em que o limite será redefinido, baseada na hora da última transação.
+* **Estrutura Centralizada:** Utiliza um dicionário (`conta`) para centralizar o estado e as configurações do sistema, facilitando a manutenção.
 
 ## 🚀 Funcionalidades e Regras de Negócio
 
-O sistema implementa as seguintes regras de operação:
+| Funcionalidade       | Regras de Negócio Implementadas                                                                                                                                                            |
+|:-------------------- |:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Depósito** (`[d]`) | Sujeito ao **Limite de Transações Diárias** (10). Aceita apenas valores positivos. Registra data e hora.                                                                                   |
+| **Saque** (`[s]`)    | Limite de **3 saques por dia** e valor máximo de **R$ 500,00** por saque. Sujeito ao **Limite de Transações Diárias** (10). Registra data e hora.                                          |
+| **Extrato** (`[e]`)  | Visualiza o histórico de transações, incluindo data e hora. Sempre acessível, mesmo após atingir os limites de movimentação.                                                               |
+| **Limite Diário**    | **Limite de 10 transações** (Depósito + Saque) por dia. Ao atingir o limite, o usuário é bloqueado para novas movimentações e informado da data e hora exata para o retorno (próximo dia). |
 
-| Funcionalidade       | Descrição e Regras                                                                                                                                                                                                                                        |
-|:-------------------- |:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Depósito** (`[d]`) | Permite adicionar fundos à conta. <br> **Regra Nova:** Sujeito ao **Limite de Transações Diárias**.                                                                                                                                                       |
-| **Saque** (`[s]`)    | Permite retirar fundos da conta. <br> <ul><li>Limite de **3 saques** por dia (Configurável).</li><li>Valor máximo de **R$ 500,00** por saque (Configurável).</li><li>Verificação de saldo.</li><li>Sujeito ao **Limite de Transações Diárias**.</li></ul> |
-| **Extrato** (`[e]`)  | Visualiza o histórico de transações e saldo atual. <br> **Melhoria:** Sempre acessível, mesmo após limites de movimentação.                                                                                                                               |
-| **Sair** (`[q]`)     | Encerra a execução do sistema.                                                                                                                                                                                                                            |
+## 🛠️ Arquitetura e Tecnologias
 
-## 🛠️ Tecnologias e Arquitetura
+O projeto utiliza:
 
-O projeto foi refatorado utilizando:
-
-* **Python 3.x** e sintaxe `match/case` para telas (se versão 3.10+).
-* **Estrutura de Dados:** Dicionário para encapsular o estado da conta e as configurações.
-* **Modularização:** Funções recebem o estado da conta como parâmetro, diminuindo a dependência de variáveis globais.
+* **Python 3.x** e o módulo `datetime` para manipulação de tempo.
+* **Estrutura de Dados:** Dicionário (`conta`) para gerenciar o estado e configurações.
+* **Modularização:** Funções recebem o estado da conta como parâmetro, mantendo o código organizado.
 
 ## 💡 Como Executar
 
@@ -53,11 +52,10 @@ Para rodar o sistema em sua máquina local, siga os passos abaixo:
 
 ## 📚 Próximos Passos (Próxima Versão - V2)
 
-Os planos para a V2 agora se concentram em aprimoramentos mais avançados, como:
+Os planos para a V2 se consolidam no próximo desafio do bootcamp:
 
-1. **Programação Orientada a Objetos (POO):** Substituir o dicionário de estado por classes e métodos para encapsular a lógica de conta, cliente e histórico.
-2. **Tratamento de Exceções:** Implementar validação de entrada robusta (ex: evitar erros ao digitar letras em valores numéricos).
-3. **Novas Funcionalidades:** Adicionar recursos como múltiplos usuários e contas.
+1. **Programação Orientada a Objetos (POO):** Migrar a arquitetura atual (dicionário) para um modelo com Classes (`Conta`, `Cliente`, `Historico`) para encapsulamento e melhor design de código.
+2. **Múltiplos Usuários:** Implementar o cadastro e login para múltiplos clientes.
 
 ---
 
