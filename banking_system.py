@@ -1,42 +1,52 @@
 from datetime import datetime, timedelta, date
 
 # -----------------
-# Estado da conta
+# Constantes e Estado Global (Listas de Dados)
 # -----------------
+
+AGENCIA = "0001"
+usuarios = []  # Lista para armazenar dicionários de usuários (clientes)
+contas = []    # Lista para armazenar dicionários de contas correntes
+
+# Dicionário de configuração de limites (Pode ser transferido para a conta no futuro)
+CONFIG_LIMITE = {
+    "limite_saque_diario": 3,
+    "limite_transacoes_diario": 10,
+    "limite_valor_saque": 500
+}
 
 conta = {
     "saldo": 0,
     "qtd_saque": 0,
     "transacao_diario": 0,
-    "movimentacoes": [],
-    "config": {
-        "limite_saque_diario": 3,
-        "limite_transacoes_diario": 10,
-        "limite_valor_saque": 500
-    }
+    "movimentacoes": []
 }
 
 # -----------------
 # Telas / Menus
 # -----------------
 
+def exibir_menu():
+    menu = f"""
+################ DIO BANK V2.0.0 ################
+#                Seja Bem-Vindo                 #
+#################################################
+# Escolha uma das opções a seguir:              #
+# [c] Novo Usuário (Cliente)                    #
+# [n] Nova Conta                                #
+# [l] Listar Contas                             #
+# -----------------------------------------------
+# [d] Depositar                                 #
+# [s] Sacar                                     #
+# [e] Extrato                                   #
+# -----------------------------------------------
+# [q] Sair                                      #
+#################################################
+=> """
+    return input(menu)
+
 def telas(tipo, conta=None):
     match tipo:
-        case "menu":
-            return """
-######################################
-#          Seja Bem-Vindo            #
-#             DIO Bank               #
-######################################
-# Escolha uma das opções a seguir:   #
-#                                    #
-#   [d] Depositar                    #
-#   [s] Sacar                        #
-#   [e] Extrato                      #
-#   [q] Sair                         #
-#                                    #
-######################################
-=> """
         case "deposito":
             return """
 ######################################
@@ -127,14 +137,18 @@ def bloqueado(conta):
 => """
     return msg_bloqueado
 
+def cadastrar_usuario_cliente():
+    pass
 
+def cadastrar_conta_bancaria():
+    pass
 
 while True:
-    opcao = input(telas(tipo = "menu"))
+    opcao = exibir_menu()
 
     if opcao in ("d", "s"):
         # Aplica a validação de limite de transações diárias APENAS para transações
-        if conta["transacao_diario"] >= conta["config"]["limite_transacoes_diario"]:
+        if conta["transacao_diario"] >= CONFIG_LIMITE["limite_transacoes_diario"]:
             print(bloqueado(conta))
             # Se a transação estiver bloqueada, volta para o menu principal
             continue  # Volta ao início do 'while True'
@@ -157,7 +171,7 @@ while True:
                 print("O valor de depósito não pode ser negativo.")
     # Entra na validação para ação de SAQUE
     elif(opcao == "s"):
-        if conta["qtd_saque"] >= conta["config"]["limite_saque_diario"]:
+        if conta["qtd_saque"] >= CONFIG_LIMITE["limite_saque_diario"]:
             print("Limite de saques diários excedidos.")
             continue
 
@@ -171,7 +185,7 @@ while True:
                 break
             elif(valor_saque > conta["saldo"]): # Verifica se há saldo suficiente
                 print("Saldo insuficiente para realização do saque.")
-            elif(valor_saque > conta["config"]["limite_valor_saque"]): # Verifica o valor do saque
+            elif(valor_saque > CONFIG_LIMITE["limite_valor_saque"]): # Verifica o valor do saque
                 print("Limite do valor de saque excedido.")
             else:
                 conta["saldo"] -= valor_saque  # Remove o valor sacado do saldo em conta                
