@@ -15,13 +15,6 @@ CONFIG_LIMITE = {
     "limite_valor_saque": 500
 }
 
-conta = {
-    "saldo": 0,
-    "qtd_saque": 0,
-    "transacao_diario": 0,
-    "movimentacoes": []
-}
-
 # -----------------
 # Telas / Menus
 # -----------------
@@ -104,44 +97,52 @@ def depositar(saldo, valor, extrato, /):
         print("\n❌ Operação falhou! O valor informado é inválido (negativo ou zero).")
         return saldo, extrato 
 
+def sacar(*, saldo, valor, extrato, limite, numero_saques, limite_saques):
+    """
+    Realiza o saque. Argumentos apenas por nome (keyword only).
+    """
+    excedeu_saldo = valor > saldo
+    excedeu_limite = valor > limite
+    excedeu_saques = numero_saques >= limite_saques
 
-def add_movimentacoes(conta, data, tipo, valor):
-    conta["movimentacoes"].append((data, tipo, valor))
-
-def get_movimentacoes(conta):
-    if len(conta["movimentacoes"]) == 0:
-        return "Nenhuma movimentação realizada."
+    if excedeu_saques:
+        print("\n❌ Operação falhou! Número máximo de saques diários excedido.")
+    elif excedeu_saldo:
+        print("\n❌ Operação falhou! Você não tem saldo suficiente.")
+    elif excedeu_limite:
+        print(f"\n❌ Operação falhou! O valor do saque excede o limite (R$ {limite:.2f}).")
+    elif valor > 0:
+        saldo -= valor
+        numero_saques += 1
+        data_hora = datetime.now()
+        extrato.append((data_hora, "Saque", valor))
+        print(f"\n✅ Saque de R$ {valor:.2f} realizado com sucesso!")
     else:
-        extrato_formatado = ""        
-        # Data armazenada em formato datetime object.
-        for data_obj, tipo, valor in conta["movimentacoes"]:
-            
-            # Converte a data e hora para formato ptBR
-            data_hora_str = data_obj.strftime('%d/%m/%Y %H:%M')            
-            # Formato: [Data e Hora] Tipo - R$ Valor
-            extrato_formatado += f"[{data_hora_str}] {tipo}: R${valor:.2f}\n"
-        
-        
-        return extrato_formatado
+        print("\n❌ Operação falhou! O valor informado é inválido (negativo ou zero).")
+
+    return saldo, extrato, numero_saques
 
 def bloqueado(conta):
-    if conta["movimentacoes"]:
-        ultima_data_obj = conta["movimentacoes"][-1][0] 
+    # BUG FIX: Alterado "movimentacoes" para "extrato"
+    if conta["extrato"]:
+        # Pega a data da última transação no extrato
+        ultima_data_obj = conta["extrato"][-1][0] 
     else:
+         # Se não há extrato, usa a data atual
         ultima_data_obj = datetime.now() 
-        
-    # Adiciona mais um dia
-    data_retorno = ultima_data_obj + timedelta(days=1)    
+
+    # Adiciona mais um dia para estimar a data de retorno
+    data_retorno = ultima_data_obj + timedelta(days=1)
     # Converte em formato ptBR
     data_retorno_formatada = data_retorno.strftime('%d/%m/%Y %H:%M')
-    
+
     msg_bloqueado = f"""
 ######################################
-#            DIO Bank                #
-#             Bloqueado              #
+#           DIO Bank                #
+#         🚫 Bloqueado              #
 ######################################
 # Você atingiu o limite de transações#
-# diárias ({conta["config"]["limite_transacoes_diario"]}).                   #
+# diárias ({conta['config']['limite_transacoes_diario']}).                  #
 #                                    #
 # Tente novamente, a partir de:      #
 # {data_retorno_formatada}           #
@@ -203,7 +204,8 @@ def criar_conta_corrente(AGENCIA, numero_conta, usuarios, contas):
             "extrato": [],
             "numero_saques": 0,
             "transacoes_hoje": 0,
-            "data_ultima_transacao": None # Para resetar limite diário no futuro
+            "data_ultima_transacao": None, # Para resetar limite diário no futuro
+            "config": CONFIG_LIMITE,
         }
         contas.append(nova_conta)
         print(f"\n✅ Conta Corrente criada com sucesso!")
@@ -228,69 +230,142 @@ def listar_contas(contas):
         print("------------------------------------")
     print("====================================")
 
-
-
-
-
-
-while True:
-    opcao = exibir_menu()
-
-    if opcao in ("d", "s"):
-        # Aplica a validação de limite de transações diárias APENAS para transações
-        if conta["transacao_diario"] >= CONFIG_LIMITE["limite_transacoes_diario"]:
-            print(bloqueado(conta))
-            # Se a transação estiver bloqueada, volta para o menu principal
-            continue  # Volta ao início do 'while True'
-    
-    if(opcao == "c"):
-        criar_usuario(usuarios)
-    elif(opcao == "n"):
-        numero_conta = len(contas) + 1  # Gera o número da conta sequencialmente
-        nova_conta = criar_conta_corrente(AGENCIA, numero_conta, usuarios, contas)
-        if nova_conta:
-            conta = nova_conta  # Define
-    # Entra na validação para ação de DEPÓSITO        
-    elif(opcao == "d"):
-        while True:            
-            # CHAMADA DE FUNÇÃO POSITIONAL-ONLY (Apenas por Posição!)
-            conta["saldo"], conta["extrato"] = \
-            depositar(conta["saldo"], valor, conta["extrato"])
-
-            # Se a transação foi válida (valor > 0), contabiliza
-            if valor > 0:
-                conta["transacoes_hoje"] += 1
-    # Entra na validação para ação de SAQUE
-    elif(opcao == "s"):
-        if conta["qtd_saque"] >= CONFIG_LIMITE["limite_saque_diario"]:
-            print("Limite de saques diários excedidos.")
-            continue
-
-        while True:            
-            valor_saque = float(input(telas(tipo = "saque"))) # Informa o valor a ser sacado
-            # Valida as regras para o saque
-            if(valor_saque < 0): # Se tentar sacar um valor negativo
-                print("Não é possível realizar um saque de valor negativo. Digite um valor válido.")
-            elif(valor_saque == 0): # Para cancelar a operação
-                print("Operação cancelada!")
-                break
-            elif(valor_saque > conta["saldo"]): # Verifica se há saldo suficiente
-                print("Saldo insuficiente para realização do saque.")
-            elif(valor_saque > CONFIG_LIMITE["limite_valor_saque"]): # Verifica o valor do saque
-                print("Limite do valor de saque excedido.")
-            else:
-                conta["saldo"] -= valor_saque  # Remove o valor sacado do saldo em conta                
-                conta["qtd_saque"] += 1 # Contabiliza a quantidade de saques
-                conta["transacao_diario"] += 1 # Contabiliza a transação
-                data_hora = datetime.now() # Registra a data e hora da movimentação               
-                add_movimentacoes(conta, data_hora, "Saque", valor_saque) # Registra a movimetação para inserir no extrato posteriormente
-                print("Saque realizado com sucesso!")
-                break
-            
-    elif(opcao == "e"):
-        print(telas(tipo = "extrato", conta = conta))
-    elif(opcao == "q"):
-        print("Nos vemos em breve. Até mais!")
-        break
+def exibir_extrato(saldo, /, *, extrato):
+    print("\n================ EXTRATO ================")
+    if not extrato:
+        print("Não foram realizadas movimentações.")
     else:
-        print("Opção inválida! Digite uma opção dentro do menu.")
+        for data, tipo, valor in extrato:
+            data_fmt = data.strftime("%d/%m/%Y %H:%M:%S")
+            print(f"{data_fmt} - {tipo}: R$ {valor:.2f}")
+    print(f"\nSaldo atual: R$ {saldo:.2f}")
+    print("=========================================\n")
+
+
+def main():
+    modo_teste_ = True  # Modo de teste ativado/desativado
+
+    global contas, usuarios
+
+    if modo_teste_:
+        print("⚠️  Modo de Teste Ativado! Dados mock serão criados automaticamente.\n")
+    # Usuário generico para testes
+        mock_usuario = {
+            "nome": "Wesley Jacques",
+            "data_nascimento": "01/01/1990",
+            "cpf": "12345678900",
+            "endereco": "Rua Exemplo, 123 - Bairro - Cidade/UF"
+        }
+        usuarios.append(mock_usuario)
+
+        # Conta genérica para testes
+        mock_conta = {
+            "agencia": AGENCIA,
+            "numero_conta": 1,
+            "usuario": mock_usuario,
+            "saldo": 0,
+            "extrato": [],
+            "numero_saques": 0,
+            "transacoes_hoje": 0,
+            "data_ultima_transacao": None, # Para resetar limite diário no futuro
+            "config": CONFIG_LIMITE,
+        }
+        contas.append(mock_conta)
+        conta = mock_conta  # Define a conta atual como a conta de teste
+    else:
+        conta = None  # Nenhuma conta selecionada inicialmente
+
+    while True:
+        opcao = exibir_menu()
+
+        if opcao in ("d", "s"):
+            if conta is None: # Verifica se há uma conta ativa
+                print("⚠️ Nenhuma conta está ativa! Crie uma conta primeiro.")
+                continue
+            if conta["transacoes_hoje"] >= CONFIG_LIMITE["limite_transacoes_diario"]: # Verifica se atingiu o limite diário de transações
+                print(bloqueado(conta))
+                continue  # Volta ao início do 'while True'
+        
+        # ---------------------------------       
+        # Entra na validação para ação de NOVO USUÁRIO
+        # ---------------------------------
+        if(opcao == "c"):
+            criar_usuario(usuarios)
+        
+        # ---------------------------------       
+        # Entra na validação para ação de NOVA CONTA
+        # ---------------------------------
+        elif(opcao == "n"):
+            numero_conta = len(contas) + 1  # Gera o número da conta sequencialmente
+            nova_conta = criar_conta_corrente(AGENCIA, numero_conta, usuarios, contas)
+            if nova_conta:
+                conta = nova_conta  # Define a nova conta como a conta ativa
+
+        # ---------------------------------
+        # Entra na validação para ação de DEPÓSITO   
+        # ---------------------------------     
+        elif(opcao == "d"):
+            if conta is None: # Verifica se há uma conta ativa
+                print("⚠️ Nenhuma conta ativa! Crie uma conta primeiro.")
+                continue
+
+            while True:
+                valor = float(input(telas(tipo="deposito")))
+                if valor == 0:
+                    print("\nℹ️  Operação cancelada pelo usuário.")
+                    break
+                novo_saldo, novo_extrato = depositar(conta["saldo"], valor, conta["extrato"])
+                conta["saldo"] = novo_saldo
+                conta["extrato"] = novo_extrato
+
+        # ---------------------------------       
+        # Entra na validação para ação de SAQUE
+        # ---------------------------------
+        elif(opcao == "s"):
+            if conta is None:
+                print("⚠️ Nenhuma conta ativa! Crie uma conta primeiro.")
+                continue
+
+            while True:
+                valor = float(input(telas(tipo="saque")))
+                if valor == 0:
+                    print("\nℹ️  Operação cancelada pelo usuário.")
+                    break
+
+                novo_saldo, novo_extrato, novo_saques = sacar(
+                    saldo=conta["saldo"],
+                    valor=valor,
+                    extrato=conta["extrato"],
+                    limite=conta["config"]["limite_valor_saque"],
+                    numero_saques=conta["numero_saques"],
+                    limite_saques=conta["config"]["limite_saque_diario"]
+                )
+
+                conta["saldo"] = novo_saldo
+                conta["extrato"] = novo_extrato
+                conta["numero_saques"] = novo_saques
+
+        # ---------------------------------       
+        # Entra na validação para ação de EXTRATO
+        # ---------------------------------        
+        elif opcao == "e":
+            if conta is None:
+                print("⚠️ Nenhuma conta ativa! Crie uma conta primeiro.")
+                continue
+            exibir_extrato(conta["saldo"], extrato=conta["extrato"])
+
+        elif opcao == "l":
+            listar_contas(contas)
+
+        # ---------------------------------       
+        # Entra na validação para ação de LOGOUT
+        # ---------------------------------
+        elif opcao == "q":
+            print("Nos vemos em breve. Até mais!")
+            break
+
+        else:
+            print("Opção inválida! Digite uma opção dentro do menu.")
+
+if __name__ == "__main__":
+    main()
