@@ -92,6 +92,19 @@ def telas(tipo, conta=None):
 # Funções
 # -----------------
 
+def depositar(saldo, valor, extrato, /):
+    # Função que realiza depósito utilizando apenas argumentos posicionais
+    if(valor > 0):
+        saldo += valor # Adiciona o valor na conta
+        data_hora = datetime.now() # Registra a data e hora da movimentação
+        extrato.append((data_hora, "Depósito", valor))
+        print(f"\n✅ Depósito de R$ {valor:.2f} realizado com sucesso!")
+        return saldo, extrato
+    else:
+        print("\n❌ Operação falhou! O valor informado é inválido (negativo ou zero).")
+        return saldo, extrato 
+
+
 def add_movimentacoes(conta, data, tipo, valor):
     conta["movimentacoes"].append((data, tipo, valor))
 
@@ -137,11 +150,88 @@ def bloqueado(conta):
 => """
     return msg_bloqueado
 
-def cadastrar_usuario_cliente():
-    pass
+def filtrar_usuario(cpf, usuarios):
+    """Retorna o usuário se o CPF for encontrado, ou None."""
+    cpf_formatado = "".join(filter(str.isdigit, cpf))
+    for usuario in usuarios:
+        if usuario["cpf"] == cpf_formatado:
+            return usuario
+    return None
 
-def cadastrar_conta_bancaria():
-    pass
+def criar_usuario(usuarios):
+    """Cria um novo usuário e armazena na lista global."""
+    cpf = input("Informe o CPF (somente números): ")
+    cpf_formatado = "".join(filter(str.isdigit, cpf))
+    
+    if filtrar_usuario(cpf_formatado, usuarios):
+        print("\n❌ CPF já cadastrado! Não é possível cadastrar dois usuários com o mesmo CPF.")
+        return
+
+    nome = input("Informe o nome completo: ")
+    dia_nascimento = input("Informe o dia de nascimento (dd): ")
+    mes_nascimento = input("Informe o mês de nascimento (mm): ")
+    ano_nascimento = input("Informe o ano de nascimento (aaaa): ")
+    data_nascimento = f"{dia_nascimento}/{mes_nascimento}/{ano_nascimento}"
+    logradouro = input("Informe o logradouro (rua, avenida, etc): ")
+    nro = input("Informe o número: ")
+    bairro = input("Informe o bairro: ")
+    cidade = input("Informe a cidade: ")
+    sigla_estado = input("Informe a sigla do estado (UF): ")
+    endereco_completo = f"{logradouro}, {nro} - {bairro} - {cidade}/{sigla_estado}"
+
+    novo_usuario = {
+        "nome": nome,
+        "data_nascimento": data_nascimento,
+        "cpf": cpf_formatado,
+        "endereco": endereco_completo
+    }
+    usuarios.append(novo_usuario)
+    print("\n✅ Usuário cadastrado com sucesso!")
+
+def criar_conta_corrente(AGENCIA, numero_conta, usuarios, contas):
+    """Cria uma nova conta e a vincula a um usuário existente."""
+    
+    cpf = input("Informe o CPF do usuário para vincular a conta: ")
+    usuario = filtrar_usuario(cpf, usuarios)
+
+    if usuario:
+        nova_conta = {
+            "agencia": AGENCIA,
+            "numero_conta": numero_conta,
+            "usuario": usuario,  # Armazena o dicionário do usuário
+            "saldo": 0,
+            "extrato": [],
+            "numero_saques": 0,
+            "transacoes_hoje": 0,
+            "data_ultima_transacao": None # Para resetar limite diário no futuro
+        }
+        contas.append(nova_conta)
+        print(f"\n✅ Conta Corrente criada com sucesso!")
+        print(f"Agência: {AGENCIA} | Número: {numero_conta}")
+        return nova_conta
+    else:
+        print("\n❌ Usuário não encontrado com o CPF informado. Cadastro de conta cancelado.")
+        return None
+
+def listar_contas(contas):
+    """Exibe todas as contas cadastradas."""
+    if not contas:
+        print("\nNão há contas cadastradas.")
+        return
+
+    print("\n======== CONTAS CADASTRADAS ========")
+    for conta in contas:
+        print(f"Agência:\t{conta['agencia']}")
+        print(f"C/C:\t\t{conta['numero_conta']}")
+        print(f"Titular:\t{conta['usuario']['nome']}")
+        print(f"CPF:\t\t{conta['usuario']['cpf']}")
+        print("------------------------------------")
+    print("====================================")
+
+
+
+
+
 
 while True:
     opcao = exibir_menu()
@@ -153,22 +243,23 @@ while True:
             # Se a transação estiver bloqueada, volta para o menu principal
             continue  # Volta ao início do 'while True'
     
+    if(opcao == "c"):
+        criar_usuario(usuarios)
+    elif(opcao == "n"):
+        numero_conta = len(contas) + 1  # Gera o número da conta sequencialmente
+        nova_conta = criar_conta_corrente(AGENCIA, numero_conta, usuarios, contas)
+        if nova_conta:
+            conta = nova_conta  # Define
     # Entra na validação para ação de DEPÓSITO        
-    if(opcao == "d"):
+    elif(opcao == "d"):
         while True:            
-            valor_deposito = float(input(telas(tipo = "deposito"))) # Informa o valor a ser depositado
-            if(valor_deposito > 0):
-                conta["saldo"] += valor_deposito # Adiciona o valor na conta
-                data_hora = datetime.now() # Registra a data e hora da movimentação
-                add_movimentacoes(conta, data_hora, "Depósito", valor_deposito) # Registra a movimetação para inserir no extrato posteriormente
-                conta["transacao_diario"] += 1 # Contabiliza a transação
-                print("Depósito realizado com sucesso!")
-                break
-            elif(valor_deposito == 0):
-                print("Operação cancelada!")
-                break
-            else:
-                print("O valor de depósito não pode ser negativo.")
+            # CHAMADA DE FUNÇÃO POSITIONAL-ONLY (Apenas por Posição!)
+            conta["saldo"], conta["extrato"] = \
+            depositar(conta["saldo"], valor, conta["extrato"])
+
+            # Se a transação foi válida (valor > 0), contabiliza
+            if valor > 0:
+                conta["transacoes_hoje"] += 1
     # Entra na validação para ação de SAQUE
     elif(opcao == "s"):
         if conta["qtd_saque"] >= CONFIG_LIMITE["limite_saque_diario"]:
