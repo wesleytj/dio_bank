@@ -1,7 +1,7 @@
 from .models.cliente import PessoaFisica
 from .models.conta_corrente import ContaCorrente
 from .models.transacao import Deposito, Saque
-
+from .currency_converter_package.converter import converter # Importa o conversor de moedas
 
 def menu():
     print("""
@@ -11,6 +11,7 @@ def menu():
 [d] Depositar
 [s] Sacar
 [e] Extrato
+[x] Converter Moeda
 [q] Sair
 ==============================
 """)
@@ -18,7 +19,7 @@ def menu():
 
 
 def main():
-    modo_teste_ = False  # Altere para True para criar cliente e conta de teste automaticamente
+    modo_teste_ = True  # Altere para True para criar cliente e conta de teste automaticamente
 
     clientes = []
     contas = []
@@ -101,6 +102,19 @@ def main():
         elif opcao == "q":
             print("\n👋 Obrigado por usar o DIO Bank! Até logo.")
             break
+
+        elif opcao == "x":
+            try:
+                valor_original = float(input("Informe o valor a ser convertido: "))
+                moeda_origem = input("Informe a moeda de origem (ex: USD, EUR, BRL): ").upper()
+                moeda_destino = input("Informe a moeda de destino (ex: USD, EUR, BRL): ").upper()
+
+                valor_convertido = converter(valor_original, moeda_origem, moeda_destino)
+                print(f"\n✅ {valor_original:.2f} {moeda_origem} equivalem a {valor_convertido:.2f} {moeda_destino}.")
+            except ValueError:
+                print("\n❌ Valor inválido. Digite um número.")
+            except Exception as e:
+                print(f"\n❌ Ocorreu um erro na conversão: {e}")
 
         else:
             print("\n❌ Opção inválida! Tente novamente.")
